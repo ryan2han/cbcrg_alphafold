@@ -209,8 +209,7 @@ def main(argv):
         data_pipeline = pipeline_multimer.DataPipeline(
             monomer_data_pipeline=monomer_data_pipeline,
             jackhmmer_binary_path=FLAGS.jackhmmer_binary_path,
-            uniprot_database_path=FLAGS.uniprot_database_path,
-            use_precomputed_msas=FLAGS.use_precomputed_msas)
+            uniprot_database_path=FLAGS.uniprot_database_path)
     else:
         data_pipeline = monomer_data_pipeline
 
