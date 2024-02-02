@@ -187,8 +187,9 @@ def predict_structure(
             'predicted_aligned_error' in prediction_result
             and 'max_predicted_aligned_error' in prediction_result
         ):
-            pae = prediction_result['predicted_aligned_error']
-            pae['pae'] = pae.pop('predicted_aligned_error')
+            tmp_result = prediction_result
+            tmp_result['pae'] = tmp_result.pop('predicted_aligned_error')
+            pae = tmp_result['pae']
             max_pae = prediction_result['max_predicted_aligned_error']
             _save_pae_json_file(pae, float(max_pae), output_dir, model_name)
 
