@@ -37,6 +37,7 @@ from alphafold.model import config
 from alphafold.model import data
 from alphafold.model import model
 from alphafold.relax import relax
+from alphafold.common import confidence
 import numpy as np
 
 # Internal import (7716).
@@ -107,6 +108,23 @@ def _check_flag(flag_name: str,
     raise ValueError(f'{flag_name} must {verb} set when running with '
                      f'"--{other_flag_name}={FLAGS[other_flag_name].value}".')
 
+def _save_pae_json_file(
+    pae: np.ndarray, max_pae: float, output_dir: str, model_name: str
+) -> None:
+  """Check prediction result for PAE data and save to a JSON file if present.
+
+  Args:
+    pae: The n_res x n_res PAE array.
+    max_pae: The maximum possible PAE value.
+    output_dir: Directory to which files are saved.
+    model_name: Name of a model.
+  """
+  pae_json = confidence.pae_json(pae, max_pae)
+
+  # Save the PAE json.
+  pae_json_output_path = os.path.join(output_dir, f'pae_scores_{model_name}.json')
+  with open(pae_json_output_path, 'w') as f:
+    f.write(pae_json)
 
 
 def predict_structure(
@@ -163,6 +181,15 @@ def predict_structure(
 
         plddt = prediction_result['plddt']
         ranking_confidences[model_name] = prediction_result['ranking_confidence']
+        
+        
+        if (
+            'predicted_aligned_error' in prediction_result
+            and 'max_predicted_aligned_error' in prediction_result
+        ):
+            pae = prediction_result['predicted_aligned_error']
+            max_pae = prediction_result['max_predicted_aligned_error']
+            _save_pae_json_file(pae, float(max_pae), output_dir, model_name)
 
         # Save the model outputs.
         result_output_path = os.path.join(output_dir, f'result_{model_name}.pkl')
@@ -203,7 +230,7 @@ def predict_structure(
     for idx, (model_name, _) in enumerate(
       sorted(ranking_confidences.items(), key=lambda x: x[1], reverse=True)):
         ranked_order.append(model_name)
-        ranked_output_path = os.path.join(output_dir, f'ranked_{idx}.pdb')
+        ranked_output_path = os.path.join(output_dir, f'ranked_{idx}_{model_name}.pdb')
         with open(ranked_output_path, 'w') as f:
             if amber_relaxer:
                 f.write(relaxed_pdbs[model_name])
